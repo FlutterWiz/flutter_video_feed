@@ -25,3 +25,8 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+android/app/google-services.json
+firebase.json
+ios/Runner.xcodeproj/project.pbxproj
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
