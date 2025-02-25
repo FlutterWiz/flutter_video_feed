@@ -1,5 +1,5 @@
 import 'package:flutter_video_feed/core/interfaces/i_auth_repository.dart';
-import 'package:flutter_video_feed/domain/models/user.dart';
+import 'package:flutter_video_feed/domain/models/video_item.dart';
 import 'package:flutter_video_feed/presentation/blocs/auth/auth_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

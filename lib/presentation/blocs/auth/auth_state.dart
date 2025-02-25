@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter_video_feed/domain/models/user.dart';
+import 'package:flutter_video_feed/domain/models/video_item.dart';
 
 class AuthState extends Equatable {
   const AuthState({
