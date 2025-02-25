@@ -1,9 +1,9 @@
 import 'package:flutter_video_feed/core/constants/enums/router_enums.dart';
 import 'package:flutter_video_feed/presentation/design_system/colors.dart';
 import 'package:flutter_video_feed/presentation/design_system/widgets/bare_bones_scaffold.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({super.key, this.child, required this.location});
@@ -29,18 +29,18 @@ BottomNavigationBar _bottomNavigationBuilder(BuildContext context, String locati
     items: [
       const BottomNavigationBarItem(
         label: '',
-        icon: Icon(CupertinoIcons.home, size: 24),
-        activeIcon: Icon(CupertinoIcons.home, size: 24),
+        icon: Icon(LucideIcons.house, size: 28),
+        activeIcon: Icon(LucideIcons.house, size: 28),
       ),
       const BottomNavigationBarItem(
         label: '',
-        icon: Icon(CupertinoIcons.play_rectangle, size: 24),
-        activeIcon: Icon(CupertinoIcons.play_rectangle, size: 24),
+        icon: Icon(LucideIcons.tvMinimalPlay, size: 28),
+        activeIcon: Icon(LucideIcons.tvMinimalPlay, size: 28),
       ),
       const BottomNavigationBarItem(
         label: '',
-        icon: Icon(CupertinoIcons.person, size: 24),
-        activeIcon: Icon(CupertinoIcons.person, size: 24),
+        icon: Icon(LucideIcons.circleUser, size: 28),
+        activeIcon: Icon(LucideIcons.circleUser, size: 28),
       ),
     ],
   );

@@ -1,5 +1,6 @@
 {
   "@@locale": "tr",
-   "dashboard": "Panel",
-   "profile": "Profil"
+   "dashboard": "Ana Sayfa",
+   "profile": "Profil",
+   "follow": "Takip Et"
 }
