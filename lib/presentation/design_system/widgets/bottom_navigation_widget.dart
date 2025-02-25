@@ -4,7 +4,6 @@ import 'package:flutter_video_feed/presentation/design_system/widgets/bare_bones
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({super.key, this.child, required this.location});
@@ -21,25 +20,27 @@ class BottomNavigationWidget extends StatelessWidget {
 BottomNavigationBar _bottomNavigationBuilder(BuildContext context, String location) {
   return BottomNavigationBar(
     key: ValueKey(location),
-    backgroundColor: white,
     currentIndex: _calculateSelectedIndex(context),
-    selectedItemColor: blue,
+    selectedItemColor: black,
+    unselectedItemColor: black54,
     onTap: (index) => _onItemTapped(index, context),
+    showSelectedLabels: false,
+    showUnselectedLabels: false,
     items: [
-      BottomNavigationBarItem(
-        label: AppLocalizations.of(context)!.dashboard,
-        icon: const Icon(CupertinoIcons.home, size: 20),
-        activeIcon: const Icon(CupertinoIcons.home, size: 20),
+      const BottomNavigationBarItem(
+        label: '',
+        icon: Icon(CupertinoIcons.home, size: 24),
+        activeIcon: Icon(CupertinoIcons.home, size: 24),
       ),
-      BottomNavigationBarItem(
-        label: AppLocalizations.of(context)!.search,
-        icon: const Icon(CupertinoIcons.search, size: 20),
-        activeIcon: const Icon(CupertinoIcons.search, size: 20),
+      const BottomNavigationBarItem(
+        label: '',
+        icon: Icon(CupertinoIcons.play_rectangle, size: 24),
+        activeIcon: Icon(CupertinoIcons.play_rectangle, size: 24),
       ),
-      BottomNavigationBarItem(
-        label: AppLocalizations.of(context)!.profile,
-        icon: const Icon(CupertinoIcons.person, size: 20),
-        activeIcon: const Icon(CupertinoIcons.person, size: 20),
+      const BottomNavigationBarItem(
+        label: '',
+        icon: Icon(CupertinoIcons.person, size: 24),
+        activeIcon: Icon(CupertinoIcons.person, size: 24),
       ),
     ],
   );
@@ -51,7 +52,7 @@ int _calculateSelectedIndex(BuildContext context) {
   if (location == RouterEnums.dashboardView.routeName) {
     return 0;
   }
-  if (location == RouterEnums.searchView.routeName) {
+  if (location == RouterEnums.videoFeedView.routeName) {
     return 1;
   }
   if (location == RouterEnums.profileView.routeName) {
@@ -66,7 +67,7 @@ void _onItemTapped(int index, BuildContext context) {
       GoRouter.of(context).go(RouterEnums.dashboardView.routeName);
       break;
     case 1:
-      GoRouter.of(context).go(RouterEnums.searchView.routeName);
+      GoRouter.of(context).go(RouterEnums.videoFeedView.routeName);
       break;
     case 2:
       GoRouter.of(context).go(RouterEnums.profileView.routeName);
