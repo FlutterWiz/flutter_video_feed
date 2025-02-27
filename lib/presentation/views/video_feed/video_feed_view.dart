@@ -43,7 +43,7 @@ class _VideoFeedViewState extends State<VideoFeedView> {
             shareCount: videoItem.shareCount,
             isLiked: likedStates[index],
             isBookmarked: bookmarkedStates[index],
-            profileImageUrl: videoItem.imageUrl,
+            profileImageUrl: videoItem.profileImageUrl,
             username: videoItem.username,
             description: videoItem.description,
             likeOnPressed: () {
