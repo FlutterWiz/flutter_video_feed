@@ -26,12 +26,13 @@ class VideoFeedItem extends StatelessWidget {
     final String profileImageUrl = videoItem.profileImageUrl;
     final String username = videoItem.username;
     final String description = videoItem.description;
+    final String videoUrl = videoItem.videoUrl;
     final int commentCount = videoItem.commentCount;
     final int shareCount = videoItem.shareCount;
 
     return Stack(
       children: [
-        VideoPlayerSection(profileImageUrl: profileImageUrl),
+        VideoPlayerSection(videoUrl: videoUrl),
         VideoOverlaySection(
           profileImageUrl: profileImageUrl,
           username: username,
