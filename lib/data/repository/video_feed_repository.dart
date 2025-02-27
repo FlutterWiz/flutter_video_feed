@@ -20,7 +20,12 @@ class VideoFeedRepository implements IVideoFeedRepository {
   }
 
   @override
-  Future<void> updateVideoProperty(String docId, VideoPropertyEnums videoProperty, bool newValue) async {
+  Future<void> updateVideoProperty(
+    String docId,
+    VideoPropertyEnums videoProperty,
+    bool newValue,
+    int? likeCount,
+  ) async {
     late String field;
 
     switch (videoProperty) {
@@ -35,7 +40,11 @@ class VideoFeedRepository implements IVideoFeedRepository {
     final DocumentReference docRef = _firestore.collection(_collectionPath).doc(docId);
 
     try {
-      await docRef.update({field: newValue});
+      if (videoProperty == VideoPropertyEnums.like) {
+        await docRef.update({field: newValue, 'likeCount': likeCount});
+      } else {
+        await docRef.update({field: newValue});
+      }
     } catch (e) {
       throw Exception('Error updating $field: $e');
     }

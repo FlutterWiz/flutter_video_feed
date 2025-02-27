@@ -12,5 +12,7 @@ abstract class IVideoFeedRepository {
   /// [videoProperty] indicates which field to update. For example, like or bookmark from [VideoPropertyEnums].
   ///
   /// [newValue] is the new boolean value.
-  Future<void> updateVideoProperty(String docId, VideoPropertyEnums videoProperty, bool newValue);
+  ///
+  /// [likeCount] is the new like count value. This is only used when [videoProperty] is [VideoPropertyEnums.like].
+  Future<void> updateVideoProperty(String docId, VideoPropertyEnums videoProperty, bool newValue, int? likeCount);
 }
