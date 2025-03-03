@@ -14,9 +14,9 @@ void injectionSetup() {
   // Register FirebaseFirestore
   getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
-  // Register AuthRepository
+  // Register VideoFeedRepository
   getIt.registerLazySingleton<IVideoFeedRepository>(() => VideoFeedRepository(getIt<FirebaseFirestore>()));
 
-  // Register AuthCubit
+  // Register VideoFeedCubit
   getIt.registerFactory<VideoFeedCubit>(() => VideoFeedCubit(getIt<IVideoFeedRepository>()));
 }

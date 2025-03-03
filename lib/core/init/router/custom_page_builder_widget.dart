@@ -8,8 +8,7 @@ CustomPageBuilderWidget customPageBuilderWidget = (BuildContext context, GoRoute
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(opacity: CurveTween(curve: Curves.easeIn).animate(animation), child: child);
-    },
+    transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+    transitionDuration: Duration.zero,
   );
 };

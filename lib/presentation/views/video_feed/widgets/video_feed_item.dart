@@ -5,24 +5,10 @@ import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_p
 import 'package:video_player/video_player.dart';
 
 class VideoFeedItem extends StatelessWidget {
-  const VideoFeedItem({
-    super.key,
-    required this.videoItem,
-    required this.bookmarkOnPressed,
-    required this.likeOnPressed,
-    required this.isBookmarked,
-    required this.isLiked,
-    required this.likeCount,
-    required this.controller,
-  });
+  const VideoFeedItem({super.key, required this.videoItem, required this.controller});
 
   final VideoItem videoItem;
-  final bool isBookmarked;
-  final bool isLiked;
-  final int likeCount;
   final VideoPlayerController? controller;
-  final VoidCallback bookmarkOnPressed;
-  final VoidCallback likeOnPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +17,9 @@ class VideoFeedItem extends StatelessWidget {
     final String description = videoItem.description;
     final int commentCount = videoItem.commentCount;
     final int shareCount = videoItem.shareCount;
+    final int likeCount = videoItem.likeCount;
+    final bool isBookmarked = videoItem.isBookmarked;
+    final bool isLiked = videoItem.isLiked;
 
     return Stack(
       children: [
@@ -44,8 +33,6 @@ class VideoFeedItem extends StatelessWidget {
           likeCount: likeCount,
           commentCount: commentCount,
           shareCount: shareCount,
-          bookmarkOnPressed: bookmarkOnPressed,
-          likeOnPressed: likeOnPressed,
         ),
       ],
     );

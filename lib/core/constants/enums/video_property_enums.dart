@@ -1,1 +1,0 @@
-enum VideoPropertyEnums { like, bookmark }

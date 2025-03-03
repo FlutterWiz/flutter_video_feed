@@ -1,5 +1,6 @@
 import 'package:flutter_video_feed/core/constants/enums/router_enums.dart';
 import 'package:flutter_video_feed/core/init/router/custom_page_builder_widget.dart';
+import 'package:flutter_video_feed/presentation/design_system/colors.dart';
 import 'package:flutter_video_feed/presentation/views/dashboard/dashboard_view.dart';
 import 'package:flutter_video_feed/presentation/design_system/widgets/bottom_navigation_widget.dart';
 import 'package:flutter_video_feed/presentation/views/profile/profile_view.dart';
@@ -21,7 +22,11 @@ class AppRouter {
             (context, state, child) => customPageBuilderWidget(
               context,
               state,
-              BottomNavigationWidget(location: state.uri.toString(), child: child),
+              BottomNavigationWidget(
+                location: state.uri.toString(),
+                child: child,
+                backgroundColor: state.uri.toString() == RouterEnums.videoFeedView.routeName ? black : null,
+              ),
             ),
         routes: [
           GoRoute(

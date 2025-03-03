@@ -10,13 +10,11 @@ class BareBonesScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: appBar,
-        body: body,
-        backgroundColor: backgroundColor,
-        bottomNavigationBar: bottomNavigationBar,
-      ),
+    return Scaffold(
+      appBar: appBar,
+      body: body,
+      backgroundColor: backgroundColor,
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }

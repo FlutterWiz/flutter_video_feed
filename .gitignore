@@ -30,3 +30,4 @@ firebase.json
 ios/Runner.xcodeproj/project.pbxproj
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
+ios/Podfile.lock

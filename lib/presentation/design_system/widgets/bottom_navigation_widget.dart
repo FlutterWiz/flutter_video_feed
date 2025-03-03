@@ -6,43 +6,53 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class BottomNavigationWidget extends StatelessWidget {
-  const BottomNavigationWidget({super.key, this.child, required this.location});
+  const BottomNavigationWidget({super.key, this.child, required this.location, this.backgroundColor});
 
   final Widget? child;
   final String location;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    return BareBonesScaffold(bottomNavigationBar: _bottomNavigationBuilder(context, location), body: child);
+    return BareBonesScaffold(
+      bottomNavigationBar: _bottomNavigationBuilder(context, location),
+      body: child,
+      backgroundColor: backgroundColor,
+    );
   }
 }
 
-BottomNavigationBar _bottomNavigationBuilder(BuildContext context, String location) {
-  return BottomNavigationBar(
-    key: ValueKey(location),
-    currentIndex: _calculateSelectedIndex(context),
-    selectedItemColor: black,
-    unselectedItemColor: black54,
-    onTap: (index) => _onItemTapped(index, context),
-    showSelectedLabels: false,
-    showUnselectedLabels: false,
-    items: [
-      const BottomNavigationBarItem(
-        label: '',
-        icon: Icon(LucideIcons.house, size: 28),
-        activeIcon: Icon(LucideIcons.house, size: 28),
-      ),
-      const BottomNavigationBarItem(
-        label: '',
-        icon: Icon(LucideIcons.tvMinimalPlay, size: 28),
-        activeIcon: Icon(LucideIcons.tvMinimalPlay, size: 28),
-      ),
-      const BottomNavigationBarItem(
-        label: '',
-        icon: Icon(LucideIcons.circleUser, size: 28),
-        activeIcon: Icon(LucideIcons.circleUser, size: 28),
-      ),
-    ],
+Widget _bottomNavigationBuilder(BuildContext context, String location) {
+  return Theme(
+    data: Theme.of(context).copyWith(splashColor: transparent, highlightColor: transparent),
+    child: BottomNavigationBar(
+      key: ValueKey(location),
+      currentIndex: _calculateSelectedIndex(context),
+      selectedItemColor: black,
+      unselectedItemColor: black54,
+      onTap: (index) => _onItemTapped(index, context),
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      selectedFontSize: 0,
+      unselectedFontSize: 0,
+      items: [
+        const BottomNavigationBarItem(
+          label: '',
+          icon: Icon(LucideIcons.house, size: 28),
+          activeIcon: Icon(LucideIcons.house, size: 28),
+        ),
+        const BottomNavigationBarItem(
+          label: '',
+          icon: Icon(LucideIcons.tvMinimalPlay, size: 28),
+          activeIcon: Icon(LucideIcons.tvMinimalPlay, size: 28),
+        ),
+        const BottomNavigationBarItem(
+          label: '',
+          icon: Icon(LucideIcons.circleUser, size: 28),
+          activeIcon: Icon(LucideIcons.circleUser, size: 28),
+        ),
+      ],
+    ),
   );
 }
 
