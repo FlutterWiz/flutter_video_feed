@@ -11,9 +11,8 @@ class AppWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appRouter = getIt<AppRouter>();
-
     return BlocProvider(
-      create: (context) => getIt<VideoFeedCubit>()..loadVideos(),
+      create: (context) => getIt<VideoFeedCubit>(),
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         routerConfig: appRouter.router,

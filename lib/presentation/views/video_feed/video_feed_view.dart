@@ -45,7 +45,9 @@ class _VideoFeedViewState extends State<VideoFeedView> {
       await controller.initialize();
       controller.setLooping(true);
       _controllers[video.id] = controller;
-      setState(() {}); // Trigger rebuild once the controller is ready.
+      if (mounted) {
+        setState(() {}); // Trigger rebuild once the controller is ready.
+      }
     }
   }
 
