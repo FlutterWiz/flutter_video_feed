@@ -12,6 +12,7 @@ class VideoItem {
   final int shareCount;
   final bool isBookmarked;
   final bool isLiked;
+  final DateTime timestamp;
 
   VideoItem({
     required this.id,
@@ -24,6 +25,7 @@ class VideoItem {
     required this.shareCount,
     required this.isBookmarked,
     required this.isLiked,
+    required this.timestamp,
   });
 
   /// Factory constructor to create a VideoItem from a Firestore DocumentSnapshot.
@@ -41,6 +43,7 @@ class VideoItem {
       shareCount: _safeInt(data['shareCount']),
       isBookmarked: _safeBool(data['isBookmarked']),
       isLiked: _safeBool(data['isLiked']),
+      timestamp: data['timestamp'] is Timestamp ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
     );
   }
 
@@ -57,6 +60,7 @@ class VideoItem {
       'shareCount': shareCount,
       'isBookmarked': isBookmarked,
       'isLiked': isLiked,
+      'timestamp': FieldValue.serverTimestamp(),
     };
   }
 }
@@ -74,68 +78,3 @@ bool _safeBool(dynamic value, {bool defaultValue = false}) {
   if (value is String) return value.toLowerCase() == 'true';
   return defaultValue;
 }
-
-/// Sample list of video items (update the image URLs as needed)
-final List<VideoItem> videoItems = [
-  VideoItem(
-    username: 'efesahin',
-    description:
-        'Check out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance movesCheck out my new dance moves!',
-    id: '5',
-    videoUrl: 'try',
-    profileImageUrl: 'https://picsum.photos/200',
-    likeCount: 123,
-    commentCount: 45,
-    shareCount: 67,
-    isBookmarked: false,
-    isLiked: true,
-  ),
-  VideoItem(
-    username: 'jane_doe',
-    description: 'Beautiful sunset at the beach.',
-    id: '4',
-    videoUrl: 'try',
-    profileImageUrl: 'https://picsum.photos/200',
-    likeCount: 456,
-    commentCount: 78,
-    shareCount: 89,
-    isBookmarked: true,
-    isLiked: false,
-  ),
-  VideoItem(
-    username: 'alex_smith',
-    description: 'Loving the vibes in this city!',
-    id: '3',
-    videoUrl: 'try',
-    profileImageUrl: 'https://picsum.photos/200',
-    likeCount: 234,
-    commentCount: 56,
-    shareCount: 34,
-    isBookmarked: false,
-    isLiked: false,
-  ),
-  VideoItem(
-    username: 'emma_watson',
-    description: 'A glimpse into my daily routine.',
-    id: '2',
-    videoUrl: 'try',
-    profileImageUrl: 'https://picsum.photos/200',
-    likeCount: 345,
-    commentCount: 67,
-    shareCount: 78,
-    isBookmarked: true,
-    isLiked: true,
-  ),
-  VideoItem(
-    username: 'chris_evans',
-    description: 'Adventure time!',
-    likeCount: 567,
-    commentCount: 89,
-    shareCount: 90,
-    isBookmarked: false,
-    isLiked: false,
-    id: '1',
-    videoUrl: 'try',
-    profileImageUrl: 'https://picsum.photos/200',
-  ),
-];
