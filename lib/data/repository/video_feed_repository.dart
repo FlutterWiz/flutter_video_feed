@@ -8,12 +8,13 @@ class VideoFeedRepository implements IVideoFeedRepository {
   final FirebaseFirestore _firestore;
   final String _collectionPath = 'videos';
 
-  DocumentSnapshot? _lastDocument;
+  // Cursor for pagination.
+  late DocumentSnapshot? _lastDocument;
 
   @override
   Future<List<VideoItem>> fetchVideos() async {
     try {
-      final QuerySnapshot snapshot =
+      final snapshot =
           await _firestore
               .collection(_collectionPath)
               .orderBy('timestamp', descending: false)
@@ -32,10 +33,9 @@ class VideoFeedRepository implements IVideoFeedRepository {
 
   @override
   Future<List<VideoItem>> fetchMoreVideos({required VideoItem lastVideo}) async {
-    // Use _lastDocument as the cursor. If it's null, return empty.
     if (_lastDocument == null) return [];
     try {
-      final QuerySnapshot snapshot =
+      final snapshot =
           await _firestore
               .collection(_collectionPath)
               .orderBy('timestamp', descending: false)

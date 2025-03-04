@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_video_feed/core/interfaces/i_video_feed_repository.dart';
@@ -17,46 +16,43 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
   Future<void> loadVideos() async {
     emit(state.copyWith(isLoading: true));
     try {
-      final List<VideoItem> videos = await videoRepository.fetchVideos();
+      final videos = await videoRepository.fetchVideos();
+      // If we receive a full batch (i.e. 2), we assume there may be more.
       final hasMore = videos.length == 2;
       emit(state.copyWith(isLoading: false, videos: videos, hasMoreVideos: hasMore));
     } catch (e) {
-      debugPrint("loadVideos error: $e");
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
   }
 
   Future<void> loadMoreVideos() async {
-    if (state.isPaginating || !state.hasMoreVideos) {
-      // Already paginating or no more videos
-      return;
-    }
-
+    if (state.isPaginating || !state.hasMoreVideos) return;
     emit(state.copyWith(isPaginating: true));
 
     try {
       if (state.videos.isNotEmpty) {
         final lastVideo = state.videos.last;
-
-        final List<VideoItem> moreVideos = await videoRepository.fetchMoreVideos(lastVideo: lastVideo);
-
+        final moreVideos = await videoRepository.fetchMoreVideos(lastVideo: lastVideo);
         final hasMore = moreVideos.length == 2;
         final updatedVideos = List<VideoItem>.from(state.videos)..addAll(moreVideos);
         emit(state.copyWith(videos: updatedVideos, isPaginating: false, hasMoreVideos: hasMore));
       }
     } catch (e) {
-      debugPrint("loadMoreVideos error: $e");
       emit(state.copyWith(isPaginating: false, error: e.toString()));
+    }
+  }
+
+  /// Called from the view when the page changes.
+  /// If the user is at the last page and more videos are available, we trigger pagination.
+  void onPageChanged(int newIndex) {
+    if (state.hasMoreVideos && newIndex >= state.videos.length - 1) {
+      loadMoreVideos();
     }
   }
 
   Future<File> getCachedVideoFile(String videoUrl) async {
     final cacheManager = DefaultCacheManager();
     final fileInfo = await cacheManager.getFileFromCache(videoUrl);
-    if (fileInfo != null) {
-      return fileInfo.file;
-    } else {
-      return await cacheManager.getSingleFile(videoUrl);
-    }
+    return fileInfo?.file ?? await cacheManager.getSingleFile(videoUrl);
   }
 }
