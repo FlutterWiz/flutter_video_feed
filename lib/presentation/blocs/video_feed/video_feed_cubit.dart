@@ -18,8 +18,8 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
     try {
       final videos = await videoRepository.fetchVideos();
       // If we receive a full batch (i.e. 2), we assume there may be more.
-      final hasMore = videos.length == 2;
-      emit(state.copyWith(isLoading: false, videos: videos, hasMoreVideos: hasMore));
+      final hasMoreVideos = videos.length == 2;
+      emit(state.copyWith(isLoading: false, videos: videos, hasMoreVideos: hasMoreVideos));
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
@@ -33,9 +33,9 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
       if (state.videos.isNotEmpty) {
         final lastVideo = state.videos.last;
         final moreVideos = await videoRepository.fetchMoreVideos(lastVideo: lastVideo);
-        final hasMore = moreVideos.length == 2;
+        final hasMoreVideos = moreVideos.length == 2;
         final updatedVideos = List<VideoItem>.from(state.videos)..addAll(moreVideos);
-        emit(state.copyWith(videos: updatedVideos, isPaginating: false, hasMoreVideos: hasMore));
+        emit(state.copyWith(videos: updatedVideos, isPaginating: false, hasMoreVideos: hasMoreVideos));
       }
     } catch (e) {
       emit(state.copyWith(isPaginating: false, error: e.toString()));

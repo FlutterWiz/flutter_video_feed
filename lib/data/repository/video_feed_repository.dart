@@ -7,49 +7,43 @@ class VideoFeedRepository implements IVideoFeedRepository {
 
   final FirebaseFirestore _firestore;
   final String _collectionPath = 'videos';
+  final int _limit = 2;
 
-  // Cursor for pagination.
   late DocumentSnapshot? _lastDocument;
 
   @override
   Future<List<VideoItem>> fetchVideos() async {
-    try {
-      final snapshot =
-          await _firestore
-              .collection(_collectionPath)
-              .orderBy('timestamp', descending: false)
-              .orderBy(FieldPath.documentId, descending: false)
-              .limit(2)
-              .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        _lastDocument = snapshot.docs.last;
-      }
-      return snapshot.docs.map((doc) => VideoItem.fromFirestore(doc)).toList();
-    } catch (e) {
-      throw Exception('Error fetching videos: $e');
-    }
+    return _fetchVideosHelper();
   }
 
   @override
   Future<List<VideoItem>> fetchMoreVideos({required VideoItem lastVideo}) async {
     if (_lastDocument == null) return [];
+    return _fetchVideosHelper(startAfterDocument: _lastDocument);
+  }
+
+  // Common helper function for fetching a batch of videos.
+  Future<List<VideoItem>> _fetchVideosHelper({DocumentSnapshot? startAfterDocument}) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection(_collectionPath)
-              .orderBy('timestamp', descending: false)
-              .orderBy(FieldPath.documentId, descending: false)
-              .startAfterDocument(_lastDocument!)
-              .limit(2)
-              .get();
+      Query query = _firestore
+          .collection(_collectionPath)
+          .orderBy('timestamp', descending: false)
+          .orderBy(FieldPath.documentId, descending: false)
+          .limit(_limit);
+
+      if (startAfterDocument != null) {
+        query = query.startAfterDocument(startAfterDocument);
+      }
+
+      final snapshot = await query.get();
 
       if (snapshot.docs.isNotEmpty) {
         _lastDocument = snapshot.docs.last;
       }
+
       return snapshot.docs.map((doc) => VideoItem.fromFirestore(doc)).toList();
     } catch (e) {
-      throw Exception('Error fetching more videos: $e');
+      throw Exception('Error fetching videos: $e');
     }
   }
 }

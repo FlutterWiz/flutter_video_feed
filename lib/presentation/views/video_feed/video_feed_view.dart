@@ -16,9 +16,9 @@ class VideoFeedView extends StatefulWidget {
 
 class _VideoFeedViewState extends State<VideoFeedView> {
   final Map<String, VideoPlayerController> _controllers = {};
+  late final PreloadPageController _pageController;
   List<VideoItem> _videos = [];
   int _currentPage = 0;
-  late final PreloadPageController _pageController;
 
   @override
   void initState() {
@@ -27,10 +27,12 @@ class _VideoFeedViewState extends State<VideoFeedView> {
     // Listen once to set up initial videos.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<VideoFeedCubit>().state;
+
       if (state.videos.isNotEmpty) {
         setState(() {
           _videos = state.videos;
         });
+
         _initializeAndPlay(_videos[0]);
       }
     });
@@ -61,7 +63,7 @@ class _VideoFeedViewState extends State<VideoFeedView> {
           }
         });
       } catch (e) {
-        debugPrint("Error initializing controller for video ${video.id}: $e");
+        debugPrint('Error initializing controller for video ${video.id}: $e');
       }
     }
   }
@@ -76,7 +78,8 @@ class _VideoFeedViewState extends State<VideoFeedView> {
   }
 
   void _disposeControllersOutsideWindow() {
-    final allowedIds = <String>{};
+    final Set<String> allowedIds = {};
+    
     for (final i in [_currentPage - 1, _currentPage, _currentPage + 1]) {
       if (i >= 0 && i < _videos.length) allowedIds.add(_videos[i].id);
     }
