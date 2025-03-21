@@ -27,13 +27,11 @@ class _VideoFeedViewState extends State<VideoFeedView> {
     // Listen once to set up initial videos.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<VideoFeedCubit>().state;
-
       if (state.videos.isNotEmpty) {
         setState(() {
           _videos = state.videos;
         });
-
-        _initializeAndPlay(_videos[0]);
+        _initializeAndPlay(_videos.first);
       }
     });
   }
@@ -55,15 +53,15 @@ class _VideoFeedViewState extends State<VideoFeedView> {
         await controller.initialize();
         controller.setLooping(true);
         _controllers[video.id] = controller;
-        if (mounted) setState(() {});
-        // Play after a short delay.
+        if (mounted) setState(() {}); // Trigger rebuild once the controller is ready.
+        // Delay to ensure UI settles, then play if it's the current video.
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _currentPage < _videos.length && _videos[_currentPage].id == video.id) {
+          if (mounted && _videos.isNotEmpty && _currentPage < _videos.length && _videos[_currentPage].id == video.id) {
             _controllers[video.id]?.play();
           }
         });
       } catch (e) {
-        debugPrint('Error initializing controller for video ${video.id}: $e');
+        debugPrint('here I am test: Error initializing controller for video ${video.id}: $e');
       }
     }
   }
@@ -79,7 +77,6 @@ class _VideoFeedViewState extends State<VideoFeedView> {
 
   void _disposeControllersOutsideWindow() {
     final Set<String> allowedIds = {};
-    
     for (final i in [_currentPage - 1, _currentPage, _currentPage + 1]) {
       if (i >= 0 && i < _videos.length) allowedIds.add(_videos[i].id);
     }
@@ -108,17 +105,18 @@ class _VideoFeedViewState extends State<VideoFeedView> {
         onPageChanged: (newIndex) {
           // Pause previous video.
           if (_currentPage < _videos.length) {
-            _controllers[_videos[_currentPage].id]?.pause();
+            final previousVideo = _videos[_currentPage];
+            _controllers[previousVideo.id]?.pause();
           }
           _currentPage = newIndex;
           _ensureControllersForWindow();
           _disposeControllersOutsideWindow();
-
-          // Play current video.
-          if (_controllers.containsKey(_videos[_currentPage].id)) {
-            _controllers[_videos[_currentPage].id]?.play();
+          // Auto-play current video.
+          final currentVideo = _videos[_currentPage];
+          if (_controllers.containsKey(currentVideo.id)) {
+            _controllers[currentVideo.id]?.play();
           }
-          // Notify cubit about the page change to trigger loadMore if needed.
+          // Notify cubit about the page change (for pagination, etc.)
           context.read<VideoFeedCubit>().onPageChanged(newIndex);
         },
         itemBuilder: (context, index) {
