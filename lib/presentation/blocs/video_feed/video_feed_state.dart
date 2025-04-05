@@ -8,6 +8,8 @@ class VideoFeedState extends Equatable {
     this.isPaginating = false,
     this.hasMoreVideos = true,
     this.error = '',
+    this.currentVideoIndex = 0,
+    this.preloadedVideoUrls = const {},
   });
 
   final List<VideoItem> videos;
@@ -15,9 +17,19 @@ class VideoFeedState extends Equatable {
   final bool isPaginating;
   final bool hasMoreVideos;
   final String error;
+  final int currentVideoIndex;
+  final Set<String> preloadedVideoUrls;
 
   @override
-  List<Object> get props => [videos, isLoading, isPaginating, hasMoreVideos, error];
+  List<Object> get props => [
+        videos,
+        isLoading,
+        isPaginating,
+        hasMoreVideos,
+        error,
+        currentVideoIndex,
+        preloadedVideoUrls,
+      ];
 
   VideoFeedState copyWith({
     List<VideoItem>? videos,
@@ -25,6 +37,8 @@ class VideoFeedState extends Equatable {
     bool? isPaginating,
     bool? hasMoreVideos,
     String? error,
+    int? currentVideoIndex,
+    Set<String>? preloadedVideoUrls,
   }) {
     return VideoFeedState(
       videos: videos ?? this.videos,
@@ -32,6 +46,8 @@ class VideoFeedState extends Equatable {
       isPaginating: isPaginating ?? this.isPaginating,
       hasMoreVideos: hasMoreVideos ?? this.hasMoreVideos,
       error: error ?? this.error,
+      currentVideoIndex: currentVideoIndex ?? this.currentVideoIndex,
+      preloadedVideoUrls: preloadedVideoUrls ?? this.preloadedVideoUrls,
     );
   }
 

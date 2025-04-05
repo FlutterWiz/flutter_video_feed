@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_video_feed/domain/models/video_item.dart';
+import 'package:flutter_video_feed/core/services/video_controller_cache_service.dart';
 import 'package:flutter_video_feed/presentation/blocs/video_feed/video_feed_cubit.dart';
 import 'package:flutter_video_feed/presentation/blocs/video_feed/video_feed_state.dart';
 import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_feed_item.dart';
@@ -14,83 +15,130 @@ class VideoFeedView extends StatefulWidget {
   State<VideoFeedView> createState() => _VideoFeedViewState();
 }
 
-class _VideoFeedViewState extends State<VideoFeedView> {
-  final Map<String, VideoPlayerController> _controllers = {};
+class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver {
+  final VideoControllerCacheService _controllers = VideoControllerCacheService();
   late final PreloadPageController _pageController;
   List<VideoItem> _videos = [];
   int _currentPage = 0;
+  bool _isAppActive = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PreloadPageController(initialPage: _currentPage);
-    // Listen once to set up initial videos.
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<VideoFeedCubit>().state;
       if (state.videos.isNotEmpty) {
         setState(() {
           _videos = state.videos;
         });
-        _initializeAndPlay(_videos.first);
+        _initializeController(_videos.first);
       }
     });
   }
 
   @override
   void dispose() {
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
+    WidgetsBinding.instance.removeObserver(this);
+    _controllers.clear();
     _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _initializeAndPlay(VideoItem video) async {
-    if (!_controllers.containsKey(video.id)) {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppActive = state == AppLifecycleState.resumed;
+    if (_isAppActive) {
+      _playCurrentVideo();
+    } else {
+      _pauseAllVideos();
+    }
+  }
+
+  Future<void> _pauseAllVideos() async {
+    await _controllers.pauseAll();
+  }
+
+  Future<void> _playCurrentVideo() async {
+    if (_videos.isEmpty || _currentPage >= _videos.length) return;
+
+    final currentVideo = _videos[_currentPage];
+    final controller = _controllers.get(currentVideo.id);
+    if (controller != null && _isAppActive) {
+      // Ensure other videos are paused before playing current
+      await _controllers.ensureOnlyCurrentPlaying(currentVideo.id);
+      await controller.play();
+    }
+  }
+
+  Future<void> _initializeController(VideoItem video) async {
+    if (!_controllers.contains(video.id)) {
       try {
         final file = await context.read<VideoFeedCubit>().getCachedVideoFile(video.videoUrl);
         final controller = VideoPlayerController.file(file);
         await controller.initialize();
         controller.setLooping(true);
-        _controllers[video.id] = controller;
-        if (mounted) setState(() {}); // Trigger rebuild once the controller is ready.
-        // Delay to ensure UI settles, then play if it's the current video.
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _videos.isNotEmpty && _currentPage < _videos.length && _videos[_currentPage].id == video.id) {
-            _controllers[video.id]?.play();
-          }
-        });
+
+        if (!mounted) return;
+
+        _controllers.put(video.id, controller);
+        setState(() {});
+
+        if (_isAppActive && _currentPage == _videos.indexOf(video)) {
+          await _playCurrentVideo();
+        }
       } catch (e) {
-        debugPrint('here I am test: Error initializing controller for video ${video.id}: $e');
+        debugPrint('Error initializing controller: $e');
       }
     }
   }
 
-  void _ensureControllersForWindow() {
-    final indices = [_currentPage - 1, _currentPage, _currentPage + 1];
-    for (final i in indices) {
-      if (i >= 0 && i < _videos.length) {
-        _initializeAndPlay(_videos[i]);
-      }
+  void _handleVideoPreloading() {
+    final cubit = context.read<VideoFeedCubit>();
+    if (_controllers.length >= 2) {
+      cubit.preloadNextVideos();
     }
   }
 
-  void _disposeControllersOutsideWindow() {
-    final Set<String> allowedIds = {};
-    for (final i in [_currentPage - 1, _currentPage, _currentPage + 1]) {
-      if (i >= 0 && i < _videos.length) allowedIds.add(_videos[i].id);
+  Future<void> _ensureControllersForWindow() async {
+    final indices = [
+      if (_currentPage > 0) _currentPage - 1,
+      _currentPage,
+      if (_currentPage < _videos.length - 1) _currentPage + 1,
+    ];
+
+    // Initialize controllers for the window
+    for (final index in indices) {
+      if (index >= 0 && index < _videos.length) {
+        await _initializeController(_videos[index]);
+      }
     }
-    final keysToRemove = _controllers.keys.where((id) => !allowedIds.contains(id)).toList();
-    for (final id in keysToRemove) {
-      _controllers[id]?.dispose();
-      _controllers.remove(id);
+
+    // Remove controllers outside the window
+    final validIds = indices
+        .where((i) => i >= 0 && i < _videos.length)
+        .map((i) => _videos[i].id)
+        .toSet();
+
+    final currentIds = Set.from(_controllers.cache.keys);
+    for (final id in currentIds) {
+      if (!validIds.contains(id)) {
+        await _controllers.remove(id);
+      }
     }
+
+    _handleVideoPreloading();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<VideoFeedCubit, VideoFeedState>(
-      listenWhen: (prev, curr) => prev.videos != curr.videos || prev.isLoading != curr.isLoading,
+      listenWhen: (prev, curr) =>
+          prev.videos != curr.videos ||
+          prev.isLoading != curr.isLoading ||
+          prev.preloadedVideoUrls != curr.preloadedVideoUrls,
       listener: (context, state) {
         setState(() {
           _videos = state.videos;
@@ -102,27 +150,26 @@ class _VideoFeedViewState extends State<VideoFeedView> {
         controller: _pageController,
         itemCount: _videos.length,
         preloadPagesCount: 2,
-        onPageChanged: (newIndex) {
-          // Pause previous video.
+        onPageChanged: (newIndex) async {
           if (_currentPage < _videos.length) {
             final previousVideo = _videos[_currentPage];
-            _controllers[previousVideo.id]?.pause();
+            await _controllers.get(previousVideo.id)?.pause();
           }
+
           _currentPage = newIndex;
-          _ensureControllersForWindow();
-          _disposeControllersOutsideWindow();
-          // Auto-play current video.
-          final currentVideo = _videos[_currentPage];
-          if (_controllers.containsKey(currentVideo.id)) {
-            _controllers[currentVideo.id]?.play();
-          }
-          // Notify cubit about the page change (for pagination, etc.)
+          await _ensureControllersForWindow();
+          await _playCurrentVideo();
+
           context.read<VideoFeedCubit>().onPageChanged(newIndex);
         },
         itemBuilder: (context, index) {
           final videoItem = _videos[index];
-          final controller = _controllers[videoItem.id];
-          return VideoFeedItem(key: ValueKey(videoItem.id), controller: controller, videoItem: videoItem);
+          final controller = _controllers.get(videoItem.id);
+          return VideoFeedItem(
+            key: ValueKey(videoItem.id),
+            controller: controller,
+            videoItem: videoItem,
+          );
         },
       ),
     );
