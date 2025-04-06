@@ -20,6 +20,10 @@ class VideoFeedView extends StatefulWidget {
 }
 
 class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver {
+  /// Maximum number of video controllers to keep in memory
+  /// Represents current video + 1 before + 1 after
+  static const int _maxControllers = 3;
+
   final Debouncer _scrollDebouncer = Debouncer(milliseconds: 150);
   late final VideoControllerCacheService _controllers;
   late final VideoStateService _videoStateService;
@@ -43,9 +47,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<VideoFeedCubit>().state;
       if (state.videos.isNotEmpty) {
-        setState(() {
-          _videos = state.videos;
-        });
+        setState(() => _videos = state.videos);
         _initializeController(_videos.first);
       }
     });
@@ -54,15 +56,21 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controllers.clear();
-    _videoStateService.clear();
+    _scrollDebouncer.dispose();
+    _cleanupResources();
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _cleanupResources() async {
+    await _controllers.clear();
+    _videoStateService.clear();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _isAppActive = state == AppLifecycleState.resumed;
+
     if (_isAppActive) {
       _playCurrentVideo();
     } else {
@@ -98,7 +106,9 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
         if (!mounted) return;
 
         _controllers.put(video.id, controller);
-        setState(() {});
+        await _manageControllerMemory();
+
+        if (mounted) setState(() {});
 
         if (_isAppActive && _currentPage == _videos.indexOf(video)) {
           await _playCurrentVideo();
@@ -109,93 +119,80 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
   }
 
+  Future<void> _manageControllerMemory() async {
+    final currentIds = Set.from(_controllers.cache.keys);
+    if (currentIds.length > _maxControllers) {
+      final idsToRemove = currentIds.where(
+        (id) =>
+            _videos.indexOf(_videos.firstWhere((v) => v.id == id)) < _currentPage - 1 ||
+            _videos.indexOf(_videos.firstWhere((v) => v.id == id)) > _currentPage + 1,
+      );
+
+      for (final id in idsToRemove) {
+        await _controllers.remove(id);
+      }
+    }
+  }
+
   Future<void> _ensureControllersForWindow() async {
-    final indices = [
+    if (_videos.isEmpty) return;
+
+    final visibleIndices = [
       if (_currentPage > 0) _currentPage - 1,
       _currentPage,
       if (_currentPage < _videos.length - 1) _currentPage + 1,
     ];
 
-    // Initialize controllers for the window
-    for (final index in indices) {
+    for (final index in visibleIndices) {
       if (index >= 0 && index < _videos.length) {
         await _initializeController(_videos[index]);
       }
-    }
-
-    // Update video visibility states
-    for (final video in _videos) {
-      if (indices.contains(_videos.indexOf(video))) {
-        _videoStateService.markVideoVisible(video.id);
-      } else {
-        _videoStateService.markVideoInvisible(video.id);
-      }
-    }
-
-    // Remove controllers outside the window
-    final validIds = indices.where((i) => i >= 0 && i < _videos.length).map((i) => _videos[i].id).toSet();
-
-    final currentIds = Set.from(_controllers.cache.keys);
-    for (final id in currentIds) {
-      if (!validIds.contains(id)) {
-        await _controllers.remove(id);
-      }
-    }
-
-    _handleVideoPreloading();
-  }
-
-  void _handleVideoPreloading() {
-    final cubit = context.read<VideoFeedCubit>();
-    if (_controllers.length >= 2) {
-      cubit.preloadNextVideos();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<VideoFeedCubit, VideoFeedState>(
-      listenWhen:
-          (prev, curr) =>
-              prev.videos != curr.videos ||
-              prev.isLoading != curr.isLoading ||
-              prev.preloadedVideoUrls != curr.preloadedVideoUrls,
-      listener: (context, state) {
-        setState(() {
-          _videos = state.videos;
-        });
-        _ensureControllersForWindow();
-      },
-      child: PreloadPageView.builder(
-        scrollDirection: Axis.vertical,
-        controller: _pageController,
-        itemCount: _videos.length,
-        preloadPagesCount: 2,
-        onPageChanged: (newIndex) async {
-          _scrollDebouncer.run(() async {
-            if (_currentPage < _videos.length) {
-              final previousVideo = _videos[_currentPage];
-              await _controllers.get(previousVideo.id)?.pause();
-              _videoStateService.markVideoInvisible(previousVideo.id);
-            }
-
-            _currentPage = newIndex;
-            await _ensureControllersForWindow();
-            await _playCurrentVideo();
-
-            context.read<VideoFeedCubit>().onPageChanged(newIndex);
-          });
+    return RepaintBoundary(
+      child: BlocListener<VideoFeedCubit, VideoFeedState>(
+        listenWhen:
+            (prev, curr) =>
+                prev.videos != curr.videos ||
+                prev.isLoading != curr.isLoading ||
+                prev.preloadedVideoUrls != curr.preloadedVideoUrls,
+        listener: (context, state) {
+          setState(() => _videos = state.videos);
+          _ensureControllersForWindow();
         },
-        itemBuilder: (context, index) {
-          final videoItem = _videos[index];
-          final controller = _controllers.get(videoItem.id);
-          return VideoFeedItem(
-            key: ValueKey(videoItem.id),
-            controller: controller,
-            videoItem: videoItem,
-            videoStateService: _videoStateService,
-          );
-        },
+        child: PreloadPageView.builder(
+          scrollDirection: Axis.vertical,
+          controller: _pageController,
+          itemCount: _videos.length,
+          onPageChanged: (newIndex) async {
+            _scrollDebouncer.run(() async {
+              if (_currentPage < _videos.length) {
+                final previousVideo = _videos[_currentPage];
+                await _controllers.get(previousVideo.id)?.pause();
+                _videoStateService.markVideoInvisible(previousVideo.id);
+              }
+
+              _currentPage = newIndex;
+              await _ensureControllersForWindow();
+              await _playCurrentVideo();
+
+              context.read<VideoFeedCubit>().onPageChanged(newIndex);
+            });
+          },
+          itemBuilder: (context, index) {
+            return RepaintBoundary(
+              child: VideoFeedItem(
+                key: ValueKey(_videos[index].id),
+                controller: _controllers.get(_videos[index].id),
+                videoItem: _videos[index],
+                videoStateService: _videoStateService,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
