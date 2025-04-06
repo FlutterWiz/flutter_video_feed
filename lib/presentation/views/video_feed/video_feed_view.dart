@@ -10,6 +10,7 @@ import 'package:flutter_video_feed/presentation/blocs/video_feed/video_feed_stat
 import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_feed_item.dart';
 import 'package:preload_page_view/preload_page_view.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_video_feed/core/di/dependency_injector.dart';
 
 class VideoFeedView extends StatefulWidget {
   const VideoFeedView({Key? key}) : super(key: key);
@@ -19,11 +20,11 @@ class VideoFeedView extends StatefulWidget {
 }
 
 class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver {
-  final VideoControllerCacheService _controllers = VideoControllerCacheService();
-  final VideoStateService _videoStateService = VideoStateService();
   final Debouncer _scrollDebouncer = Debouncer(milliseconds: 150);
+  late final VideoControllerCacheService _controllers;
+  late final VideoStateService _videoStateService;
   late final PreloadPageController _pageController;
-  
+
   List<VideoItem> _videos = [];
   int _currentPage = 0;
   bool _isAppActive = true;
@@ -31,6 +32,8 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   @override
   void initState() {
     super.initState();
+    _controllers = getIt<VideoControllerCacheService>();
+    _videoStateService = getIt<VideoStateService>();
     WidgetsBinding.instance.addObserver(this);
     _pageController = PreloadPageController(initialPage: _currentPage);
     _initializeFirstVideo();
@@ -76,7 +79,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
     final currentVideo = _videos[_currentPage];
     _videoStateService.markVideoVisible(currentVideo.id);
-    
+
     final controller = _controllers.get(currentVideo.id);
     if (controller != null && _isAppActive) {
       await _controllers.ensureOnlyCurrentPlaying(currentVideo.id);
@@ -130,10 +133,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
 
     // Remove controllers outside the window
-    final validIds = indices
-        .where((i) => i >= 0 && i < _videos.length)
-        .map((i) => _videos[i].id)
-        .toSet();
+    final validIds = indices.where((i) => i >= 0 && i < _videos.length).map((i) => _videos[i].id).toSet();
 
     final currentIds = Set.from(_controllers.cache.keys);
     for (final id in currentIds) {
@@ -155,10 +155,11 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     return BlocListener<VideoFeedCubit, VideoFeedState>(
-      listenWhen: (prev, curr) =>
-          prev.videos != curr.videos ||
-          prev.isLoading != curr.isLoading ||
-          prev.preloadedVideoUrls != curr.preloadedVideoUrls,
+      listenWhen:
+          (prev, curr) =>
+              prev.videos != curr.videos ||
+              prev.isLoading != curr.isLoading ||
+              prev.preloadedVideoUrls != curr.preloadedVideoUrls,
       listener: (context, state) {
         setState(() {
           _videos = state.videos;
