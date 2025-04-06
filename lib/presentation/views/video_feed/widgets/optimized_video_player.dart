@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_video_feed/core/services/video_state_service.dart';
 import 'package:video_player/video_player.dart';
 
 class OptimizedVideoPlayer extends StatefulWidget {
@@ -7,12 +6,10 @@ class OptimizedVideoPlayer extends StatefulWidget {
     Key? key,
     required this.controller,
     required this.videoId,
-    required this.videoStateService,
   }) : super(key: key);
 
   final VideoPlayerController? controller;
   final String videoId;
-  final VideoStateService videoStateService;
 
   @override
   State<OptimizedVideoPlayer> createState() => _OptimizedVideoPlayerState();

@@ -22,14 +22,14 @@ class VideoFeedState extends Equatable {
 
   @override
   List<Object> get props => [
-        videos,
-        isLoading,
-        isPaginating,
-        hasMoreVideos,
-        error,
-        currentVideoIndex,
-        preloadedVideoUrls,
-      ];
+    videos,
+    isLoading,
+    isPaginating,
+    hasMoreVideos,
+    error,
+    currentVideoIndex,
+    preloadedVideoUrls,
+  ];
 
   VideoFeedState copyWith({
     List<VideoItem>? videos,

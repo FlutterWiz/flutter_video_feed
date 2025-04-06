@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_video_feed/core/services/video_state_service.dart';
 import 'package:flutter_video_feed/domain/models/video_item.dart';
 import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_overlay_section.dart';
 import 'package:flutter_video_feed/presentation/views/video_feed/widgets/optimized_video_player.dart';
@@ -10,12 +9,10 @@ class VideoFeedItem extends StatelessWidget {
     super.key,
     required this.videoItem,
     required this.controller,
-    required this.videoStateService,
   });
 
   final VideoItem videoItem;
   final VideoPlayerController? controller;
-  final VideoStateService videoStateService;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +22,6 @@ class VideoFeedItem extends StatelessWidget {
           OptimizedVideoPlayer(
             controller: controller,
             videoId: videoItem.id,
-            videoStateService: videoStateService,
           ),
           VideoOverlaySection(
             profileImageUrl: videoItem.profileImageUrl,

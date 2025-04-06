@@ -6,8 +6,6 @@ class VideoFeedRepository implements IVideoFeedRepository {
   VideoFeedRepository(this._firestore);
 
   final FirebaseFirestore _firestore;
-  final String _collectionPath = 'videos';
-  final int _limit = 2;
 
   late DocumentSnapshot? _lastDocument;
 
@@ -26,10 +24,10 @@ class VideoFeedRepository implements IVideoFeedRepository {
   Future<List<VideoItem>> _fetchVideosHelper({DocumentSnapshot? startAfterDocument}) async {
     try {
       Query query = _firestore
-          .collection(_collectionPath)
+          .collection('videos')
           .orderBy('timestamp', descending: false)
           .orderBy(FieldPath.documentId, descending: false)
-          .limit(_limit);
+          .limit(2);
 
       if (startAfterDocument != null) {
         query = query.startAfterDocument(startAfterDocument);

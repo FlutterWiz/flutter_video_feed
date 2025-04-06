@@ -23,14 +23,7 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
     try {
       final videos = await videoRepository.fetchVideos();
       final hasMoreVideos = videos.length == 2;
-      emit(
-        state.copyWith(
-          isLoading: false,
-          videos: videos,
-          hasMoreVideos: hasMoreVideos,
-          currentVideoIndex: 0,
-        ),
-      );
+      emit(state.copyWith(isLoading: false, videos: videos, hasMoreVideos: hasMoreVideos, currentVideoIndex: 0));
 
       // Start preloading next videos after initial load
       if (videos.isNotEmpty) {
@@ -47,20 +40,12 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
 
     try {
       if (state.videos.isNotEmpty) {
-        final lastVideo = state.videos.last;
-        final moreVideos = await videoRepository.fetchMoreVideos(
-          lastVideo: lastVideo,
-        );
-        final hasMoreVideos = moreVideos.length == 2;
-        final updatedVideos = List<VideoItem>.from(state.videos)
-          ..addAll(moreVideos);
-        emit(
-          state.copyWith(
-            videos: updatedVideos,
-            isPaginating: false,
-            hasMoreVideos: hasMoreVideos,
-          ),
-        );
+        final VideoItem lastVideo = state.videos.last;
+        final List<VideoItem> moreVideos = await videoRepository.fetchMoreVideos(lastVideo: lastVideo);
+        final bool hasMoreVideos = moreVideos.length == 2;
+        final List<VideoItem> updatedVideos = List<VideoItem>.from(state.videos)..addAll(moreVideos);
+
+        emit(state.copyWith(videos: updatedVideos, isPaginating: false, hasMoreVideos: hasMoreVideos));
 
         // Preload new videos after loading more
         preloadNextVideos();
@@ -77,9 +62,7 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
     preloadNextVideos();
 
     // Smart pagination trigger
-    if (!_isPreloadingMore &&
-        state.hasMoreVideos &&
-        newIndex >= state.videos.length - 2) {
+    if (!_isPreloadingMore && state.hasMoreVideos && newIndex >= state.videos.length - 2) {
       _isPreloadingMore = true;
       await loadMoreVideos();
       _isPreloadingMore = false;
@@ -109,8 +92,7 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
       final file = await getCachedVideoFile(videoUrl);
       _preloadedFiles[videoUrl] = file;
 
-      final currentPreloaded = Set<String>.from(state.preloadedVideoUrls)
-        ..add(videoUrl);
+      final currentPreloaded = Set<String>.from(state.preloadedVideoUrls)..add(videoUrl);
       emit(state.copyWith(preloadedVideoUrls: currentPreloaded));
     } catch (e) {
       debugPrint('Error preloading video: $e');
