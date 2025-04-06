@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_video_feed/domain/models/video_item.dart';
 import 'package:flutter_video_feed/core/services/video_controller_cache_service.dart';
+import 'package:flutter_video_feed/core/services/video_state_service.dart';
+import 'package:flutter_video_feed/core/utils/debouncer.dart';
 import 'package:flutter_video_feed/presentation/blocs/video_feed/video_feed_cubit.dart';
 import 'package:flutter_video_feed/presentation/blocs/video_feed/video_feed_state.dart';
 import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_feed_item.dart';
@@ -17,7 +20,10 @@ class VideoFeedView extends StatefulWidget {
 
 class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver {
   final VideoControllerCacheService _controllers = VideoControllerCacheService();
+  final VideoStateService _videoStateService = VideoStateService();
+  final Debouncer _scrollDebouncer = Debouncer(milliseconds: 150);
   late final PreloadPageController _pageController;
+  
   List<VideoItem> _videos = [];
   int _currentPage = 0;
   bool _isAppActive = true;
@@ -27,7 +33,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _pageController = PreloadPageController(initialPage: _currentPage);
+    _initializeFirstVideo();
+  }
 
+  void _initializeFirstVideo() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<VideoFeedCubit>().state;
       if (state.videos.isNotEmpty) {
@@ -43,6 +52,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controllers.clear();
+    _videoStateService.clear();
     _pageController.dispose();
     super.dispose();
   }
@@ -65,9 +75,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     if (_videos.isEmpty || _currentPage >= _videos.length) return;
 
     final currentVideo = _videos[_currentPage];
+    _videoStateService.markVideoVisible(currentVideo.id);
+    
     final controller = _controllers.get(currentVideo.id);
     if (controller != null && _isAppActive) {
-      // Ensure other videos are paused before playing current
       await _controllers.ensureOnlyCurrentPlaying(currentVideo.id);
       await controller.play();
     }
@@ -95,13 +106,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
   }
 
-  void _handleVideoPreloading() {
-    final cubit = context.read<VideoFeedCubit>();
-    if (_controllers.length >= 2) {
-      cubit.preloadNextVideos();
-    }
-  }
-
   Future<void> _ensureControllersForWindow() async {
     final indices = [
       if (_currentPage > 0) _currentPage - 1,
@@ -113,6 +117,15 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     for (final index in indices) {
       if (index >= 0 && index < _videos.length) {
         await _initializeController(_videos[index]);
+      }
+    }
+
+    // Update video visibility states
+    for (final video in _videos) {
+      if (indices.contains(_videos.indexOf(video))) {
+        _videoStateService.markVideoVisible(video.id);
+      } else {
+        _videoStateService.markVideoInvisible(video.id);
       }
     }
 
@@ -130,6 +143,13 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
 
     _handleVideoPreloading();
+  }
+
+  void _handleVideoPreloading() {
+    final cubit = context.read<VideoFeedCubit>();
+    if (_controllers.length >= 2) {
+      cubit.preloadNextVideos();
+    }
   }
 
   @override
@@ -151,16 +171,19 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
         itemCount: _videos.length,
         preloadPagesCount: 2,
         onPageChanged: (newIndex) async {
-          if (_currentPage < _videos.length) {
-            final previousVideo = _videos[_currentPage];
-            await _controllers.get(previousVideo.id)?.pause();
-          }
+          _scrollDebouncer.run(() async {
+            if (_currentPage < _videos.length) {
+              final previousVideo = _videos[_currentPage];
+              await _controllers.get(previousVideo.id)?.pause();
+              _videoStateService.markVideoInvisible(previousVideo.id);
+            }
 
-          _currentPage = newIndex;
-          await _ensureControllersForWindow();
-          await _playCurrentVideo();
+            _currentPage = newIndex;
+            await _ensureControllersForWindow();
+            await _playCurrentVideo();
 
-          context.read<VideoFeedCubit>().onPageChanged(newIndex);
+            context.read<VideoFeedCubit>().onPageChanged(newIndex);
+          });
         },
         itemBuilder: (context, index) {
           final videoItem = _videos[index];
@@ -169,6 +192,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
             key: ValueKey(videoItem.id),
             controller: controller,
             videoItem: videoItem,
+            videoStateService: _videoStateService,
           );
         },
       ),
