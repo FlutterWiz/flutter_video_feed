@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_video_feed/presentation/design_system/colors.dart';
+import 'package:flutter_video_feed/presentation/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class VideoOverlaySection extends StatelessWidget {
   const VideoOverlaySection({
