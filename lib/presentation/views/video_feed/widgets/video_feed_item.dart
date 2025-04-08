@@ -16,25 +16,23 @@ class VideoFeedItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Stack(
-        children: [
-          OptimizedVideoPlayer(
-            controller: controller,
-            videoId: videoItem.id,
-          ),
-          VideoOverlaySection(
-            profileImageUrl: videoItem.profileImageUrl,
-            username: videoItem.username,
-            description: videoItem.description,
-            isBookmarked: videoItem.isBookmarked,
-            isLiked: videoItem.isLiked,
-            likeCount: videoItem.likeCount,
-            commentCount: videoItem.commentCount,
-            shareCount: videoItem.shareCount,
-          ),
-        ],
-      ),
+    return Stack(
+      children: [
+        OptimizedVideoPlayer(
+          controller: controller,
+          videoId: videoItem.id,
+        ),
+        VideoOverlaySection(
+          profileImageUrl: videoItem.profileImageUrl,
+          username: videoItem.username,
+          description: videoItem.description,
+          isBookmarked: videoItem.isBookmarked,
+          isLiked: videoItem.isLiked,
+          likeCount: videoItem.likeCount,
+          commentCount: videoItem.commentCount,
+          shareCount: videoItem.shareCount,
+        ),
+      ],
     );
   }
 }

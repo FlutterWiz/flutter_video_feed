@@ -1,10 +1,8 @@
 import 'package:video_player/video_player.dart';
 
-/// A service that implements caching for VideoPlayerController instances
-/// using a Least Recently Used (LRU) strategy.
-///
-/// This service manages the lifecycle and memory usage of VideoPlayerController
-/// instances by maintaining a fixed-size cache using LRU eviction policy.
+/// A service that manages VideoPlayerController instances with LRU caching.
+/// LRU (Least Recently Used) ensures we keep the most recently accessed controllers
+/// and remove the least recently used ones when the cache is full.
 class VideoControllerCacheService {
   final int maxSize;
   final Map<String, VideoPlayerController> _cache = {};
@@ -13,38 +11,38 @@ class VideoControllerCacheService {
 
   VideoControllerCacheService({this.maxSize = 5});
 
+  /// Gets a controller from cache and updates its access order
   VideoPlayerController? get(String id) {
-    if (_cache.containsKey(id)) {
-      _updateAccessOrder(id);
-      return _cache[id];
-    }
-    return null;
+    if (!_cache.containsKey(id)) return null;
+    
+    _updateAccessOrder(id);
+    return _cache[id];
   }
 
+  /// Adds a controller to cache, removing least recently used if full
   void put(String id, VideoPlayerController controller) {
     if (_cache.length >= maxSize && !_cache.containsKey(id)) {
-      _removeOldest();
+      _removeLeastRecentlyUsed();
     }
     _cache[id] = controller;
     _updateAccessOrder(id);
   }
 
+  /// Updates the access order by moving the id to the end of the list
   void _updateAccessOrder(String id) {
     _accessOrder.remove(id);
     _accessOrder.add(id);
   }
 
-  Future<void> _removeOldest() async {
-    if (_accessOrder.isNotEmpty) {
-      final oldestId = _accessOrder.removeAt(0);
-      await _disposeController(oldestId);
-    }
+  /// Removes the least recently used controller
+  Future<void> _removeLeastRecentlyUsed() async {
+    if (_accessOrder.isEmpty) return;
+    
+    final oldestId = _accessOrder.removeAt(0);
+    await _disposeController(oldestId);
   }
 
-  Future<void> remove(String id) async {
-    await _disposeController(id);
-  }
-
+  /// Disposes a controller and removes it from cache
   Future<void> _disposeController(String id) async {
     if (_disposingControllers.contains(id)) return;
     _disposingControllers.add(id);
@@ -62,6 +60,12 @@ class VideoControllerCacheService {
     }
   }
 
+  /// Removes a specific controller
+  Future<void> remove(String id) async {
+    await _disposeController(id);
+  }
+
+  /// Clears all controllers from cache
   Future<void> clear() async {
     final ids = List.from(_cache.keys);
     for (final id in ids) {
@@ -69,13 +73,13 @@ class VideoControllerCacheService {
     }
   }
 
+  /// Checks if a controller exists in cache
   bool contains(String id) => _cache.containsKey(id);
 
-  int get length => _cache.length;
-
+  /// Gets all cached controllers
   Map<String, VideoPlayerController> get cache => _cache;
 
-  /// Ensures only the current video is playing and others are paused
+  /// Ensures only the current video is playing
   Future<void> ensureOnlyCurrentPlaying(String currentId) async {
     for (final id in _cache.keys) {
       if (id != currentId) {
@@ -96,6 +100,6 @@ class VideoControllerCacheService {
     }
   }
 
-  /// Checks if a controller is currently being disposed
+  /// Checks if a controller is being disposed
   bool isDisposing(String id) => _disposingControllers.contains(id);
 }

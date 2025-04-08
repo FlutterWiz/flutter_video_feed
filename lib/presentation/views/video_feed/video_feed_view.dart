@@ -60,16 +60,11 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _isAppActive = state == AppLifecycleState.resumed;
-
     if (_isAppActive) {
       _playCurrentVideo();
     } else {
-      _pauseAllVideos();
+      _controllers.pauseAll();
     }
-  }
-
-  Future<void> _pauseAllVideos() async {
-    await _controllers.pauseAll();
   }
 
   Future<void> _playCurrentVideo() async {
@@ -150,11 +145,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: BlocListener<VideoFeedCubit, VideoFeedState>(
-        listenWhen:
-            (prev, curr) =>
-                prev.videos != curr.videos ||
-                prev.isLoading != curr.isLoading ||
-                prev.preloadedVideoUrls != curr.preloadedVideoUrls,
+        listenWhen: (prev, curr) =>
+            prev.videos != curr.videos ||
+            prev.isLoading != curr.isLoading ||
+            prev.preloadedVideoUrls != curr.preloadedVideoUrls,
         listener: (context, state) {
           setState(() => _videos = state.videos);
           _ensureControllersForWindow();
