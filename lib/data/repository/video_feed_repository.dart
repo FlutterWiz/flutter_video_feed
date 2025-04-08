@@ -7,20 +7,34 @@ class VideoFeedRepository implements IVideoFeedRepository {
 
   final FirebaseFirestore _firestore;
 
-  late DocumentSnapshot? _lastDocument;
+  DocumentSnapshot? _lastDocument;
 
   @override
   Future<List<VideoItem>> fetchVideos() async {
-    return _fetchVideosHelper();
+    try {
+      return await _fetchVideosHelper();
+    } on FirebaseException catch (e) {
+      throw Exception('Failed to fetch videos from Firestore: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching videos: $e');
+    }
   }
 
   @override
   Future<List<VideoItem>> fetchMoreVideos({required VideoItem lastVideo}) async {
-    if (_lastDocument == null) return [];
-    return _fetchVideosHelper(startAfterDocument: _lastDocument);
+    if (_lastDocument == null) {
+      return [];
+    }
+
+    try {
+      return await _fetchVideosHelper(startAfterDocument: _lastDocument);
+    } on FirebaseException catch (e) {
+      throw Exception('Failed to fetch more videos from Firestore: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching more videos: $e');
+    }
   }
 
-  // Common helper function for fetching a batch of videos.
   Future<List<VideoItem>> _fetchVideosHelper({DocumentSnapshot? startAfterDocument}) async {
     try {
       Query query = _firestore
@@ -40,8 +54,10 @@ class VideoFeedRepository implements IVideoFeedRepository {
       }
 
       return snapshot.docs.map((doc) => VideoItem.fromFirestore(doc)).toList();
+    } on FirebaseException catch (e) {
+      throw Exception('Firestore error while fetching videos: ${e.message}');
     } catch (e) {
-      throw Exception('Error fetching videos: $e');
+      throw Exception('Error processing video data: $e');
     }
   }
 }

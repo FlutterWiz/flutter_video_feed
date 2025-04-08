@@ -144,10 +144,9 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: BlocListener<VideoFeedCubit, VideoFeedState>(
-        listenWhen: (prev, curr) =>
-            prev.videos != curr.videos ||
-            prev.isLoading != curr.isLoading ||
-            prev.preloadedVideoUrls != curr.preloadedVideoUrls,
+        listenWhen:
+            (p, c) =>
+                p.videos != c.videos || p.isLoading != c.isLoading || p.preloadedVideoUrls != c.preloadedVideoUrls,
         listener: (context, state) {
           setState(() => _videos = state.videos);
           _ensureControllersForWindow();

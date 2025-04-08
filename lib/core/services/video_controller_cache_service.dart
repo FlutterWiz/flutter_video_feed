@@ -11,9 +11,19 @@ class VideoControllerCacheService {
 
   VideoControllerCacheService({this.maxSize = 5});
 
+  /// Checks if a controller exists in cache
+  bool contains(String id) => _cache.containsKey(id);
+
+  /// Gets the IDs of cached controllers
+  Set<String> get cachedIds => Set.from(_cache.keys);
+
+  /// Checks if a controller is being disposed
+  bool isDisposing(String id) => _disposingControllers.contains(id);
+
   /// Gets a controller from cache and updates its access order
   VideoPlayerController? get(String id) {
     if (!_cache.containsKey(id)) return null;
+
     _updateAccessOrder(id);
     return _cache[id];
   }
@@ -23,38 +33,9 @@ class VideoControllerCacheService {
     if (_cache.length >= maxSize && !_cache.containsKey(id)) {
       _removeLeastRecentlyUsed();
     }
+
     _cache[id] = controller;
     _updateAccessOrder(id);
-  }
-
-  /// Updates the access order by moving the id to the end of the list
-  void _updateAccessOrder(String id) {
-    _accessOrder.remove(id);
-    _accessOrder.add(id);
-  }
-
-  /// Removes the least recently used controller
-  Future<void> _removeLeastRecentlyUsed() async {
-    if (_accessOrder.isEmpty) return;
-    await _disposeController(_accessOrder.removeAt(0));
-  }
-
-  /// Disposes a controller and removes it from cache
-  Future<void> _disposeController(String id) async {
-    if (_disposingControllers.contains(id)) return;
-    _disposingControllers.add(id);
-
-    try {
-      final controller = _cache[id];
-      if (controller != null) {
-        await controller.pause();
-        await controller.dispose();
-        _cache.remove(id);
-      }
-      _accessOrder.remove(id);
-    } finally {
-      _disposingControllers.remove(id);
-    }
   }
 
   /// Removes a specific controller
@@ -65,19 +46,11 @@ class VideoControllerCacheService {
   /// Clears all controllers from cache
   Future<void> clear() async {
     final ids = List.from(_cache.keys);
+
     for (final id in ids) {
       await _disposeController(id);
     }
   }
-
-  /// Checks if a controller exists in cache
-  bool contains(String id) => _cache.containsKey(id);
-
-  /// Gets the number of cached controllers
-  int get size => _cache.length;
-
-  /// Gets the IDs of cached controllers
-  Set<String> get cachedIds => Set.from(_cache.keys);
 
   /// Ensures only the current video is playing
   Future<void> ensureOnlyCurrentPlaying(String currentId) async {
@@ -97,6 +70,36 @@ class VideoControllerCacheService {
     }
   }
 
-  /// Checks if a controller is being disposed
-  bool isDisposing(String id) => _disposingControllers.contains(id);
+  /// Updates the access order by moving the id to the end of the list
+  void _updateAccessOrder(String id) {
+    _accessOrder.remove(id);
+    _accessOrder.add(id);
+  }
+
+  /// Removes the least recently used controller
+  Future<void> _removeLeastRecentlyUsed() async {
+    if (_accessOrder.isEmpty) return;
+
+    await _disposeController(_accessOrder.removeAt(0));
+  }
+
+  /// Disposes a controller and removes it from cache
+  Future<void> _disposeController(String id) async {
+    if (_disposingControllers.contains(id)) return;
+
+    _disposingControllers.add(id);
+
+    try {
+      final controller = _cache[id];
+
+      if (controller != null) {
+        await controller.pause();
+        await controller.dispose();
+        _cache.remove(id);
+      }
+      _accessOrder.remove(id);
+    } finally {
+      _disposingControllers.remove(id);
+    }
+  }
 }
