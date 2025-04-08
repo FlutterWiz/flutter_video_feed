@@ -46,23 +46,6 @@ class VideoItem {
       timestamp: data['timestamp'] is Timestamp ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
     );
   }
-
-  /// Converts the VideoItem instance into a Map.
-  /// This is used when saving/updating the document in Firestore.
-  Map<String, dynamic> toMap() {
-    return {
-      'username': username,
-      'description': description,
-      'videoUrl': videoUrl,
-      'profileImageUrl': profileImageUrl,
-      'likeCount': likeCount,
-      'commentCount': commentCount,
-      'shareCount': shareCount,
-      'isBookmarked': isBookmarked,
-      'isLiked': isLiked,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-  }
 }
 
 /// Helper function to safely convert a dynamic value to an int.
