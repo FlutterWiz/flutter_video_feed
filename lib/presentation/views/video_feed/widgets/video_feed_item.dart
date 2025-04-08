@@ -5,11 +5,7 @@ import 'package:flutter_video_feed/presentation/views/video_feed/widgets/optimiz
 import 'package:video_player/video_player.dart';
 
 class VideoFeedItem extends StatelessWidget {
-  const VideoFeedItem({
-    super.key,
-    required this.videoItem,
-    required this.controller,
-  });
+  const VideoFeedItem({super.key, required this.videoItem, required this.controller});
 
   final VideoItem videoItem;
   final VideoPlayerController? controller;
@@ -18,10 +14,7 @@ class VideoFeedItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        OptimizedVideoPlayer(
-          controller: controller,
-          videoId: videoItem.id,
-        ),
+        OptimizedVideoPlayer(controller: controller, videoId: videoItem.id),
         VideoOverlaySection(
           profileImageUrl: videoItem.profileImageUrl,
           username: videoItem.username,
