@@ -93,7 +93,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
         controller.setLooping(true);
         _controllers.put(video.id, controller);
-        await _manageControllerMemory();
 
         if (mounted) setState(() {});
 
@@ -106,11 +105,26 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
   }
 
-  Future<void> _manageControllerMemory() async {
-    final currentIds = Set.from(_controllers.cache.keys);
+  Future<void> _ensureControllersForWindow() async {
+    if (_videos.isEmpty) return;
 
-    /// Maximum number of video controllers to keep in memory we select is 3.
-    /// It represents the current video + 1 before + 1 after => in total 3.
+    // Calculate visible indices (current + adjacent)
+    final visibleIndices = [
+      if (_currentPage > 0) _currentPage - 1,
+      _currentPage,
+      if (_currentPage < _videos.length - 1) _currentPage + 1,
+    ];
+
+    // Initialize controllers for visible videos
+    for (final index in visibleIndices) {
+      if (index >= 0 && index < _videos.length) {
+        final video = _videos[index];
+        await _initializeController(video);
+      }
+    }
+
+    // Clean up controllers that are too far from current page
+    final currentIds = _controllers.cachedIds;
     if (currentIds.length > 3) {
       final currentVideoIndex = _currentPage;
       final idsToRemove = currentIds.where((id) {
@@ -126,32 +140,14 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
     }
   }
 
-  Future<void> _ensureControllersForWindow() async {
-    if (_videos.isEmpty) return;
-
-    final visibleIndices = [
-      if (_currentPage > 0) _currentPage - 1,
-      _currentPage,
-      if (_currentPage < _videos.length - 1) _currentPage + 1,
-    ];
-
-    for (final index in visibleIndices) {
-      if (index >= 0 && index < _videos.length) {
-        final video = _videos[index];
-        await _initializeController(video);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: BlocListener<VideoFeedCubit, VideoFeedState>(
-        listenWhen:
-            (prev, curr) =>
-                prev.videos != curr.videos ||
-                prev.isLoading != curr.isLoading ||
-                prev.preloadedVideoUrls != curr.preloadedVideoUrls,
+        listenWhen: (prev, curr) =>
+            prev.videos != curr.videos ||
+            prev.isLoading != curr.isLoading ||
+            prev.preloadedVideoUrls != curr.preloadedVideoUrls,
         listener: (context, state) {
           setState(() => _videos = state.videos);
           _ensureControllersForWindow();

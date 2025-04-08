@@ -36,9 +36,7 @@ class VideoControllerCacheService {
   /// Removes the least recently used controller
   Future<void> _removeLeastRecentlyUsed() async {
     if (_accessOrder.isEmpty) return;
-    
-    final oldestId = _accessOrder.removeAt(0);
-    await _disposeController(oldestId);
+    await _disposeController(_accessOrder.removeAt(0));
   }
 
   /// Disposes a controller and removes it from cache
@@ -75,17 +73,17 @@ class VideoControllerCacheService {
   /// Checks if a controller exists in cache
   bool contains(String id) => _cache.containsKey(id);
 
-  /// Gets all cached controllers
-  Map<String, VideoPlayerController> get cache => _cache;
+  /// Gets the number of cached controllers
+  int get size => _cache.length;
+
+  /// Gets the IDs of cached controllers
+  Set<String> get cachedIds => Set.from(_cache.keys);
 
   /// Ensures only the current video is playing
   Future<void> ensureOnlyCurrentPlaying(String currentId) async {
-    for (final id in _cache.keys) {
-      if (id != currentId) {
-        final controller = _cache[id];
-        if (controller != null && controller.value.isPlaying) {
-          await controller.pause();
-        }
+    for (final entry in _cache.entries) {
+      if (entry.key != currentId && entry.value.value.isPlaying) {
+        await entry.value.pause();
       }
     }
   }
