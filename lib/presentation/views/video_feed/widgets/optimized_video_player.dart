@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class OptimizedVideoPlayer extends StatefulWidget {
-  const OptimizedVideoPlayer({
-    Key? key,
-    required this.controller,
-    required this.videoId,
-  }) : super(key: key);
+  const OptimizedVideoPlayer({Key? key, required this.controller, required this.videoId}) : super(key: key);
 
   final VideoPlayerController? controller;
   final String videoId;
