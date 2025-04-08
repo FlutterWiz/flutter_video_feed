@@ -14,7 +14,6 @@ class VideoControllerCacheService {
   /// Gets a controller from cache and updates its access order
   VideoPlayerController? get(String id) {
     if (!_cache.containsKey(id)) return null;
-    
     _updateAccessOrder(id);
     return _cache[id];
   }
