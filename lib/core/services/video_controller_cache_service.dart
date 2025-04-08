@@ -9,6 +9,7 @@ class VideoControllerCacheService {
   final int maxSize;
   final Map<String, VideoPlayerController> _cache = {};
   final List<String> _accessOrder = [];
+  final Set<String> _disposingControllers = {};
 
   VideoControllerCacheService({this.maxSize = 5});
 
@@ -45,17 +46,25 @@ class VideoControllerCacheService {
   }
 
   Future<void> _disposeController(String id) async {
-    final controller = _cache[id];
-    if (controller != null) {
-      await controller.pause();
-      await controller.dispose();
-      _cache.remove(id);
+    if (_disposingControllers.contains(id)) return;
+    _disposingControllers.add(id);
+
+    try {
+      final controller = _cache[id];
+      if (controller != null) {
+        await controller.pause();
+        await controller.dispose();
+        _cache.remove(id);
+      }
+      _accessOrder.remove(id);
+    } finally {
+      _disposingControllers.remove(id);
     }
-    _accessOrder.remove(id);
   }
 
   Future<void> clear() async {
-    for (final id in List.from(_cache.keys)) {
+    final ids = List.from(_cache.keys);
+    for (final id in ids) {
       await _disposeController(id);
     }
   }
@@ -70,7 +79,10 @@ class VideoControllerCacheService {
   Future<void> ensureOnlyCurrentPlaying(String currentId) async {
     for (final id in _cache.keys) {
       if (id != currentId) {
-        await _cache[id]?.pause();
+        final controller = _cache[id];
+        if (controller != null && controller.value.isPlaying) {
+          await controller.pause();
+        }
       }
     }
   }
@@ -78,7 +90,12 @@ class VideoControllerCacheService {
   /// Pauses all videos
   Future<void> pauseAll() async {
     for (final controller in _cache.values) {
-      await controller.pause();
+      if (controller.value.isPlaying) {
+        await controller.pause();
+      }
     }
   }
+
+  /// Checks if a controller is currently being disposed
+  bool isDisposing(String id) => _disposingControllers.contains(id);
 }

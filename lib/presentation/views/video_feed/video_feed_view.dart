@@ -53,6 +53,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   }
 
   Future<void> _cleanupResources() async {
+    await _controllers.pauseAll();
     await _controllers.clear();
   }
 
@@ -119,7 +120,9 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
       );
 
       for (final id in idsToRemove) {
-        await _controllers.remove(id);
+        if (!_controllers.isDisposing(id)) {
+          await _controllers.remove(id);
+        }
       }
     }
   }
@@ -135,7 +138,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
     for (final index in visibleIndices) {
       if (index >= 0 && index < _videos.length) {
-        await _initializeController(_videos[index]);
+        final video = _videos[index];
+        if (!_controllers.contains(video.id) && !_controllers.isDisposing(video.id)) {
+          await _initializeController(video);
+        }
       }
     }
   }
@@ -160,7 +166,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
           onPageChanged: (newIndex) async {
             if (_currentPage < _videos.length) {
               final previousVideo = _videos[_currentPage];
-              await _controllers.get(previousVideo.id)?.pause();
+              final controller = _controllers.get(previousVideo.id);
+              if (controller != null && controller.value.isPlaying) {
+                await controller.pause();
+              }
             }
 
             _currentPage = newIndex;
