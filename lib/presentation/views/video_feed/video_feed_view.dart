@@ -74,8 +74,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
       if (state.videos.isNotEmpty) {
         setState(() => _videos = state.videos);
 
-        // Initialize first video with a delay to ensure UI is ready
-        await Future.delayed(const Duration(milliseconds: 100));
         await _initAndPlayVideo(0);
       }
     });
@@ -173,7 +171,7 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   Future<void> _pauseAllControllers() async {
     // Create a copy of the controllers to avoid concurrent modification
     final controllers = List<VideoPlayerController>.from(_controllerCache.values);
-    
+
     for (final controller in controllers) {
       try {
         if (controller.value.isInitialized && controller.value.isPlaying) {
