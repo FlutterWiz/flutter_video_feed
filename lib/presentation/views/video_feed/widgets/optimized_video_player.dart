@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_video_feed/presentation/design_system/colors.dart';
 import 'package:video_player/video_player.dart';
 
 class OptimizedVideoPlayer extends StatefulWidget {
@@ -124,7 +125,7 @@ class _OptimizedVideoPlayerState extends State<OptimizedVideoPlayer> with Single
       return Center(
         child: RotationTransition(
           turns: Tween(begin: 0.0, end: 1.0).animate(_loadingController),
-          child: const CircularProgressIndicator(),
+          child: const CircularProgressIndicator(color: white),
         ),
       );
     }
