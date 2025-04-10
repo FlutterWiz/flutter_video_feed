@@ -10,7 +10,3 @@ clean:
 	rm -rf pubspec.lock
 	flutter clean
 	flutter pub get
-
-firebase:
-	dart pub global activate flutterfire_cli
-	flutterfire configure --project=flutte-video-feed
