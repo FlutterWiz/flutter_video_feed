@@ -171,7 +171,10 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
   /// Pause all controllers
   Future<void> _pauseAllControllers() async {
-    for (final controller in _controllerCache.values) {
+    // Create a copy of the controllers to avoid concurrent modification
+    final controllers = List<VideoPlayerController>.from(_controllerCache.values);
+    
+    for (final controller in controllers) {
       try {
         if (controller.value.isInitialized && controller.value.isPlaying) {
           await controller.pause();
