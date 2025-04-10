@@ -6,12 +6,13 @@ class VideoFeedRepository implements IVideoFeedRepository {
   VideoFeedRepository(this._firestore);
 
   final FirebaseFirestore _firestore;
-
   DocumentSnapshot? _lastDocument;
 
   @override
   Future<List<VideoItem>> fetchVideos() async {
     try {
+      // Reset pagination state for a fresh fetch
+      _lastDocument = null;
       return await _fetchVideosHelper();
     } on FirebaseException catch (e) {
       throw Exception('Failed to fetch videos from Firestore: ${e.message}');
@@ -21,7 +22,7 @@ class VideoFeedRepository implements IVideoFeedRepository {
   }
 
   @override
-  Future<List<VideoItem>> fetchMoreVideos({required VideoItem lastVideo}) async {
+  Future<List<VideoItem>> fetchMoreVideos() async {
     if (_lastDocument == null) {
       return [];
     }
@@ -49,10 +50,11 @@ class VideoFeedRepository implements IVideoFeedRepository {
 
       final snapshot = await query.get();
 
-      if (snapshot.docs.isNotEmpty) {
-        _lastDocument = snapshot.docs.last;
+      if (snapshot.docs.isEmpty) {
+        return [];
       }
 
+      _lastDocument = snapshot.docs.last;
       return snapshot.docs.map((doc) => VideoItem.fromFirestore(doc)).toList();
     } on FirebaseException catch (e) {
       throw Exception('Firestore error while fetching videos: ${e.message}');

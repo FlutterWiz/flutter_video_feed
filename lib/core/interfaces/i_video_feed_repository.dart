@@ -6,6 +6,5 @@ abstract class IVideoFeedRepository {
   Future<List<VideoItem>> fetchVideos();
 
   /// Fetch additional videos for pagination.
-  /// [lastVideo] is the last video from the current list.
-  Future<List<VideoItem>> fetchMoreVideos({required VideoItem lastVideo});
+  Future<List<VideoItem>> fetchMoreVideos();
 }

@@ -7,7 +7,6 @@ import 'package:flutter_video_feed/presentation/views/video_feed/widgets/video_f
 import 'package:preload_page_view/preload_page_view.dart';
 import 'package:video_player/video_player.dart';
 
-/// Main view for the video feed
 class VideoFeedView extends StatefulWidget {
   const VideoFeedView({Key? key}) : super(key: key);
 
@@ -15,7 +14,7 @@ class VideoFeedView extends StatefulWidget {
   State<VideoFeedView> createState() => _VideoFeedViewState();
 }
 
-class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserver {
   /// Maximum number of controllers to keep in cache
   final int _maxCacheSize = 3;
 
@@ -41,9 +40,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   final Set<String> _disposingControllers = Set<String>();
 
   @override
-  bool get wantKeepAlive => true;
-
-  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
@@ -53,7 +49,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pageController.dispose();
     _disposeAllControllers();
     super.dispose();
   }
@@ -227,6 +222,8 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
   /// Dispose all controllers
   Future<void> _disposeAllControllers() async {
+    _pageController.dispose();
+
     final controllerIds = List<String>.from(_controllerCache.keys);
     for (final id in controllerIds) {
       await _removeController(id);
@@ -317,8 +314,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     return RepaintBoundary(
       child: BlocListener<VideoFeedCubit, VideoFeedState>(
         listenWhen:
@@ -332,7 +327,6 @@ class _VideoFeedViewState extends State<VideoFeedView> with WidgetsBindingObserv
           scrollDirection: Axis.vertical,
           controller: _pageController,
           itemCount: _videos.length,
-          preloadPagesCount: 1,
           physics: const AlwaysScrollableScrollPhysics(),
           onPageChanged: (index) => _handlePageChange(index),
           itemBuilder: (context, index) {

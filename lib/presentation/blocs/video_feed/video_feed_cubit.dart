@@ -40,8 +40,7 @@ class VideoFeedCubit extends Cubit<VideoFeedState> {
 
     try {
       if (state.videos.isNotEmpty) {
-        final VideoItem lastVideo = state.videos.last;
-        final List<VideoItem> moreVideos = await videoRepository.fetchMoreVideos(lastVideo: lastVideo);
+        final List<VideoItem> moreVideos = await videoRepository.fetchMoreVideos();
         final bool hasMoreVideos = moreVideos.length == 2;
         final List<VideoItem> updatedVideos = List<VideoItem>.from(state.videos)..addAll(moreVideos);
 

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// VideoItem model represents the video metadata used in the app.
 class VideoItem {
   final String id;
   final String username;
