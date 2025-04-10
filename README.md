@@ -5,6 +5,8 @@
 
 To keep performance sharp and resource usage minimal, the project uses an LRU (Least Recently Used) caching strategy for video preloading and disposal.
 
+> ⭐️ If you find this project useful, consider giving it a star on GitHub — it helps others discover it too!
+
 ## 🎥 Showcase (GIF)
 
 ![Image](https://github.com/user-attachments/assets/64bcd1f4-ee28-4f01-b91c-3c0338f3b2f7)
