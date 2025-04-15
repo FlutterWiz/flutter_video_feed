@@ -36,11 +36,10 @@ lib/
 
 ## 📚 Tutorials
 
-* **YouTube Videos** 🎥
-  * Coming Soon
+* **YouTube Video** 🎥
+<img src="https://github.com/user-attachments/assets/39554010-8942-4bdf-8729-922c512da2f4" style="width: 400px; height: 250px;">
 
-* **Medium Article** ✍️
-  * Coming Soon
+  * https://www.youtube.com/watch?v=oQ_Izz1Q4iY
 
 ## 🤝 Contributing
 
